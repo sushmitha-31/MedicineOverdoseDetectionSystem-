@@ -1,0 +1,367 @@
+{% extends "base.html" %}
+{% block body_class %}home-bg{% endblock %}
+
+{% block content %}
+<h2 class="text-center text-dark mb-5 fw-bold">📊 Analysis Dashboard</h2>
+
+{% if analysis_error %}
+<div class="alert alert-warning mx-auto mb-4" style="max-width: 900px;">
+  <strong>Warning:</strong> {{ analysis_error }}
+</div>
+{% endif %}
+
+<div class="container">
+  <!-- SECTION 1: PATIENT STATISTICS -->
+  <h4 class="text-dark mt-5 mb-4">📈 Patient Statistics</h4>
+  <div class="row g-4 mb-5">
+    <!-- Total Patients -->
+    <div class="col-md-3">
+      <div class="dashboard-card soft-blue">
+        <h5>Total Patients</h5>
+        <p class="stat-number">{{ total_patients }}</p>
+      </div>
+    </div>
+
+    <!-- High Risk -->
+    <div class="col-md-3">
+      <div class="dashboard-card soft-red">
+        <h5>High Risk</h5>
+        <p class="stat-number">{{ high_risk }}</p>
+        <small>{{ high_risk_pct }}%</small>
+      </div>
+    </div>
+
+    <!-- Low Risk -->
+    <div class="col-md-3">
+      <div class="dashboard-card soft-green">
+        <h5>Low Risk</h5>
+        <p class="stat-number">{{ low_risk }}</p>
+        <small>{{ (100 - high_risk_pct) }}%</small>
+      </div>
+    </div>
+
+    <!-- Avg Age (High Risk) -->
+    <div class="col-md-3">
+      <div class="dashboard-card soft-orange">
+        <h5>Avg Age (High)</h5>
+        <p class="stat-number">{{ avg_age_by_risk['High Risk'] }}</p>
+        <small>years</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: CHARTS -->
+  <div class="row mt-4 g-4 mb-5">
+    <!-- Risk Pie Chart -->
+    <div class="col-md-6">
+      <div class="chart-card">
+        <h5 class="text-center mb-3 fw-semibold">Risk Distribution</h5>
+        <canvas id="riskPieChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Age Comparison -->
+    <div class="col-md-6">
+      <div class="chart-card">
+        <h5 class="text-center mb-3 fw-semibold">Average Age by Risk Level</h5>
+        <canvas id="ageBarChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: MODEL PERFORMANCE -->
+  <h4 class="text-dark mt-5 mb-4">🤖 Model Performance</h4>
+  <div class="row g-4 mb-5">
+    <div class="col-lg-12">
+      <div class="table-responsive chart-card">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Model</th>
+              <th>Precision</th>
+              <th>Recall</th>
+              <th>F1-Score</th>
+              <th>ROC-AUC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="table-success">
+              <td><strong>Logistic Regression</strong></td>
+              <td>{{ (model_performance['LR']['precision']*100)|round(2) }}%</td>
+              <td>{{ (model_performance['LR']['recall']*100)|round(2) }}%</td>
+              <td>{{ (model_performance['LR']['f1']*100)|round(2) }}%</td>
+              <td>{{ model_performance['LR']['auc']|round(4) }}</td>
+            </tr>
+            <tr class="table-info">
+              <td><strong>Hybrid Neural Network</strong></td>
+              <td>{{ (model_performance['NN']['precision']*100)|round(2) }}%</td>
+              <td>{{ (model_performance['NN']['recall']*100)|round(2) }}%</td>
+              <td>{{ (model_performance['NN']['f1']*100)|round(2) }}%</td>
+              <td>{{ model_performance['NN']['auc']|round(4) }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="text-muted small mt-2">
+          <strong>Interpretation:</strong> Precision = accuracy of high-risk predictions | Recall = % of actual high-risk cases caught | ROC-AUC = overall model discrimination (0.5=random, 1.0=perfect)
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: FEATURE IMPORTANCE -->
+  <h4 class="text-dark mt-5 mb-4">🎯 Key Risk Factors (Feature Importance)</h4>
+  <div class="row g-4 mb-5">
+    <div class="col-md-6">
+      <div class="chart-card">
+        <h5 class="text-center mb-3">Age Difference (High vs Low Risk)</h5>
+        <canvas id="featureChart"></canvas>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="chart-card">
+        <h5 class="text-center mb-3">Average Dosage by Risk Level</h5>
+        <canvas id="dosageChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 5: COMORBIDITY IMPACT -->
+  <h4 class="text-dark mt-5 mb-4">🏥 Comorbidity Impact on High-Risk Cases</h4>
+  <div class="row g-4 mb-5">
+    <div class="col-lg-12">
+      <div class="chart-card">
+        <h5 class="text-center mb-3">Prevalence in High-Risk Patients</h5>
+        <canvas id="comorbidityChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 6: MEDICATION IMPACT -->
+  <h4 class="text-dark mt-5 mb-4">💊 Medication Usage Patterns</h4>
+  <div class="row g-4 mb-5">
+    <div class="col-lg-12">
+      <div class="chart-card">
+        <h5 class="text-center mb-3">Average Drug Dosages (High Risk vs Low Risk)</h5>
+        <canvas id="medicationChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Chart Setup -->
+<script>
+// Data from Flask
+const highRisk = {{ high_risk }};
+const lowRisk = {{ low_risk }};
+const avgAgeByRisk = {{ avg_age_by_risk|tojson }};
+const featureImportance = {{ feature_importance|tojson }};
+const comorbidityStats = {{ comorbidity_stats|tojson }};
+const modelPerf = {{ model_performance|tojson }};
+
+// 1. Risk Pie Chart
+new Chart(document.getElementById('riskPieChart'), {
+  type: 'pie',
+  data: {
+    labels: ['High Risk', 'Low Risk'],
+    datasets: [{
+      data: [highRisk, lowRisk],
+      backgroundColor: ['#f8b6b6', '#b8e4b8'],
+      borderColor: ['#f26d6d', '#6ac36a'],
+      borderWidth: 2
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom' }
+    }
+  }
+});
+
+// 2. Age Bar Chart
+new Chart(document.getElementById('ageBarChart'), {
+  type: 'bar',
+  data: {
+    labels: ['High Risk', 'Low Risk'],
+    datasets: [{
+      label: 'Average Age (years)',
+      data: [avgAgeByRisk['High Risk'], avgAgeByRisk['Low Risk']],
+      backgroundColor: ['#ffa6a6', '#90ee90'],
+      borderRadius: 8
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, max: 80 }
+    }
+  }
+});
+
+// 3. Feature Importance Chart
+new Chart(document.getElementById('featureChart'), {
+  type: 'bar',
+  data: {
+    labels: Object.keys(featureImportance),
+    datasets: [{
+      label: 'Risk Increase Factor',
+      data: Object.values(featureImportance),
+      backgroundColor: '#4169e1',
+      borderRadius: 8
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    plugins: { legend: { display: false } }
+  }
+});
+
+// 4. Dosage Comparison
+new Chart(document.getElementById('dosageChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Paracetamol (mg)', 'Ibuprofen (mg)'],
+    datasets: [
+      {
+        label: 'High Risk',
+        data: [{{ avg_paracetamol_high }}, {{ avg_ibuprofen_high }}],
+        backgroundColor: '#ff6b6b'
+      },
+      {
+        label: 'Low Risk',
+        data: [{{ avg_paracetamol_low }}, {{ avg_ibuprofen_low }}],
+        backgroundColor: '#51cf66'
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    scales: { y: { beginAtZero: true } }
+  }
+});
+
+// 5. Comorbidity Chart
+new Chart(document.getElementById('comorbidityChart'), {
+  type: 'bar',
+  data: {
+    labels: Object.keys(comorbidityStats),
+    datasets: [{
+      label: 'Prevalence in High-Risk Patients (%)',
+      data: Object.values(comorbidityStats),
+      backgroundColor: '#ffa500',
+      borderRadius: 8
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, max: 100 } }
+  }
+});
+
+// 6. Medication Usage Chart
+new Chart(document.getElementById('medicationChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Paracetamol (mg)', 'Ibuprofen (mg)', 'Aspirin (mg)', 'Diclofenac (mg)', 'Naproxen (mg)'],
+    datasets: [
+      {
+        label: 'High Risk',
+        data: [
+          {{ avg_paracetamol_high if avg_paracetamol_high is defined else 0 }},
+          {{ avg_ibuprofen_high if avg_ibuprofen_high is defined else 0 }},
+          {{ avg_aspirin_high if avg_aspirin_high is defined else 0 }},
+          {{ avg_diclofenac_high if avg_diclofenac_high is defined else 0 }},
+          {{ avg_naproxen_high if avg_naproxen_high is defined else 0 }}
+        ],
+        backgroundColor: '#ff6b6b'
+      },
+      {
+        label: 'Low Risk',
+        data: [
+          {{ avg_paracetamol_low if avg_paracetamol_low is defined else 0 }},
+          {{ avg_ibuprofen_low if avg_ibuprofen_low is defined else 0 }},
+          {{ avg_aspirin_low if avg_aspirin_low is defined else 0 }},
+          {{ avg_diclofenac_low if avg_diclofenac_low is defined else 0 }},
+          {{ avg_naproxen_low if avg_naproxen_low is defined else 0 }}
+        ],
+        backgroundColor: '#51cf66'
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    scales: { y: { beginAtZero: true } }
+  }
+});
+</script>
+
+<!-- Custom Styles -->
+<style>
+.dashboard-card {
+  border-radius: 15px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+.dashboard-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+.dashboard-card h5 {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+}
+.stat-number {
+  font-size: 32px;
+  font-weight: bold;
+  color: #0d6efd;
+  margin: 10px 0;
+}
+.dashboard-card small {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+/* Pastel backgrounds */
+.soft-blue {
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+}
+.soft-red {
+  background: linear-gradient(135deg, #fdecea, #f8b6b6);
+}
+.soft-green {
+  background: linear-gradient(135deg, #e8f5e9, #b8e4b8);
+}
+.soft-orange {
+  background: linear-gradient(135deg, #ffe8cc, #ffd9b3);
+}
+
+/* Chart card */
+.chart-card {
+  background: #fff;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: box-shadow 0.3s ease;
+}
+.chart-card:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+}
+
+/* Table styling */
+.table-hover tbody tr:hover {
+  background-color: rgba(0,0,0,0.03);
+}
+</style>
+
+{% endblock %}

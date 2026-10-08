@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block body_class %}home-bg{% endblock %}
+
+{% block content %}
+<h2 class="text-center text-white mb-5 fw-bold">Welcome, {{ user }}</h2>
+
+<div class="container">
+  <div class="row g-4">
+    <!-- Prediction Card -->
+    <div class="col-md-4">
+      <a href="{{ url_for('predict') }}" class="text-decoration-none">
+        <div class="dashboard-card gradient-1">
+          <i class="bi bi-activity fs-1 mb-3"></i>
+          <h4>Prediction</h4>
+          <p>Check patient's overdose risk</p>
+        </div>
+      </a>
+    </div>
+
+    <!-- Analysis Card -->
+    <div class="col-md-4">
+      <a href="{{ url_for('analysis') }}" class="text-decoration-none">
+        <div class="dashboard-card gradient-2">
+          <i class="bi bi-bar-chart-line-fill fs-1 mb-3"></i>
+          <h4>Analysis</h4>
+          <p>View data and statistics</p>
+        </div>
+      </a>
+    </div>
+
+    <!-- Precautions Card -->
+    <div class="col-md-4">
+      <a href="{{ url_for('precautions') }}" class="text-decoration-none">
+        <div class="dashboard-card gradient-3">
+          <i class="bi bi-shield-plus fs-1 mb-3"></i>
+          <h4>Precautions</h4>
+          <p>Medical safety guidelines</p>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+<!-- Custom CSS -->
+<style>
+.dashboard-card {
+  border-radius: 20px;
+  padding: 35px 20px;
+  color: white;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+.dashboard-card:hover {
+  transform: translateY(-10px) scale(1.03);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+}
+.dashboard-card h4 {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.dashboard-card p {
+  opacity: 0.9;
+  font-size: 15px;
+}
+
+/* Gradient Backgrounds */
+.gradient-1 {
+  background: linear-gradient(135deg, #007bff, #00c6ff);
+}
+.gradient-2 {
+  background: linear-gradient(135deg, #28a745, #7bed9f);
+}
+.gradient-3 {
+  background: linear-gradient(135deg, #dc3545, #ff758c);
+}
+
+/* Responsive Design */
+@media (max-width: 767px) {
+  .dashboard-card {
+    padding: 25px 15px;
+  }
+}
+</style>
+
+{% endblock %}
+
+
+
+

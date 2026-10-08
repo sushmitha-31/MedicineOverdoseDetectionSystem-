@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block body_class %}prediction-bg{% endblock %}
+{% block content %}
+<div class="card card-custom mx-auto p-4" style="max-width:600px;">
+  <h2 class="text-center mb-3">Predict Overdose Risk</h2>
+  <form method="POST" action="{{ url_for('predict') }}">
+    <div class="mb-3">
+      <label>Age</label>
+      <input type="number" name="Age" class="form-control" required min="1" max="120">
+    </div>
+
+    <div class="mb-3">
+      <label>Gender</label>
+      <select name="Gender" class="form-control" required>
+        <option value="">Select</option>
+        <option value="1">Male</option>
+        <option value="0">Female</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label>Do you take Paracetamol?</label><br>
+      <input type="radio" name="Paracetamol" value="1" required> Yes
+      <input type="radio" name="Paracetamol" value="0" required> No
+    </div>
+
+    <div class="mb-3">
+      <label>Do you take Ibuprofen?</label><br>
+      <input type="radio" name="Ibuprofen" value="1" required> Yes
+      <input type="radio" name="Ibuprofen" value="0" required> No
+    </div>
+
+    <div class="mb-3">
+      <label>Do you take Aspirin?</label><br>
+      <input type="radio" name="Aspirin" value="1" required> Yes
+      <input type="radio" name="Aspirin" value="0" required> No
+    </div>
+
+    <div class="mb-3">
+      <label>Do you take Diclofenac?</label><br>
+      <input type="radio" name="Diclofenac" value="1" required> Yes
+      <input type="radio" name="Diclofenac" value="0" required> No
+    </div>
+
+    <div class="mb-3">
+      <label>Do you take Naproxen?</label><br>
+      <input type="radio" name="Naproxen" value="1" required> Yes
+      <input type="radio" name="Naproxen" value="0" required> No
+    </div>
+
+    <div class="mb-3">
+      <label>Prescription for Alzheimers?</label><br>
+      <input type="radio" name="Alzheimers" value="1" required> Yes
+      <input type="radio" name="Alzheimers" value="0" required> No
+    </div>
+
+    <div class="mb-3">
+      <label>Prescription for Diabetes?</label><br>
+      <input type="radio" name="Diabetes" value="1" required> Yes
+      <input type="radio" name="Diabetes" value="0" required> No
+    </div>
+
+    <div class="mb-3">
+      <label>Any past history of heart attack?</label><br>
+      <input type="radio" name="Heart_Attack" value="1" required> Yes
+      <input type="radio" name="Heart_Attack" value="0" required> No
+    </div>
+
+    <button type="submit" class="btn btn-primary">Predict</button>
+  </form>
+</div>
+{% endblock %}
+
+

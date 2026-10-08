@@ -1,0 +1,149 @@
+
+{% extends "base.html" %}
+{% block body_class %}prediction-bg{% endblock %}
+{% block content %}
+
+<div class="card card-custom mx-auto p-4" style="max-width:600px;">
+  <h2 class="text-center mb-3">Predict Overdose Risk</h2>
+  
+  <!-- Error Display -->
+  {% if error %}
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <strong>⚠️ Invalid Input:</strong> {{ error }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  {% endif %}
+
+  <!-- Prediction Form -->
+  <form method="POST" action="{{ url_for('predict') }}">
+    <div class="mb-3">
+      <label>Age</label>
+      <input type="number" name="Age" class="form-control" required min="1" max="120">
+    </div>
+
+    <div class="mb-3">
+      <label>Gender</label>
+      <select name="Gender" class="form-control" required>
+        <option value="">Select</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label>Paracetamol Dosage (mg)</label>
+      <input type="number" name="Paracetamol" class="form-control" required min="0" max="4000" placeholder="0-4000 mg">
+    </div>
+
+    <div class="mb-3">
+      <label>Ibuprofen Dosage (mg)</label>
+      <input type="number" name="Ibuprofen" class="form-control" required min="0" max="2400" placeholder="0-2400 mg">
+    </div>
+
+    <div class="mb-3">
+      <label>Aspirin Dosage (mg)</label>
+      <input type="number" name="Aspirin" class="form-control" required min="0" max="1000" placeholder="0-1000 mg">
+    </div>
+
+    <div class="mb-3">
+      <label>Diclofenac Dosage (mg)</label>
+      <input type="number" name="Diclofenac" class="form-control" required min="0" max="150" placeholder="0-150 mg">
+    </div>
+
+    <div class="mb-3">
+      <label>Naproxen Dosage (mg)</label>
+      <input type="number" name="Naproxen" class="form-control" required min="0" max="1000" placeholder="0-1000 mg">
+    </div>
+
+    <div class="mb-3">
+      <label>Alzheimers Condition</label>
+      <select name="Alzheimers" class="form-control" required>
+        <option value="">Select</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label>Diabetes Condition</label>
+      <select name="Diabetes" class="form-control" required>
+        <option value="">Select</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label>Heart Attack History</label>
+      <select name="Heart_Attack" class="form-control" required>
+        <option value="">Select</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100">Predict Risk</button>
+  </form>
+
+  <!-- Results Display -->
+  {% if risk %}
+  <hr class="my-4">
+  <div class="mt-4 text-center">
+    <h4 class="mb-3">Overdose Risk Assessment</h4>
+    <div class="mb-3">
+      <span class="badge badge-lg {% if risk == 'High' %}bg-danger{% else %}bg-success{% endif %}" style="font-size: 1.2rem; padding: 0.5rem 1rem;">{{ risk }}</span>
+    </div>
+    <p class="text-muted">Risk Probability: <strong>{{ (prob*100)|round(2) }}%</strong></p>
+    <div style="max-width: 300px; margin: 0 auto;">
+      <canvas id="pieChart"></canvas>
+    </div>
+    <div class="mt-4">
+      <a href="{{ url_for('predict') }}" class="btn btn-secondary">Clear Form</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const ctx = document.getElementById('pieChart').getContext('2d');
+    const pieChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['Low Risk', 'High Risk'],
+        datasets: [{
+          data: [{{ (1-prob)|round(4) }}, {{ prob|round(4) }}],
+          backgroundColor: ['#28a745', '#dc3545']
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+  </script>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
